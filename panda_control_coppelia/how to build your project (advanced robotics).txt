@@ -1,0 +1,17 @@
+
+
+please add -DFranka_DIR
+
+
+cmake .. -DFranka_DIR:PATH=/home/dyros/libfranka/build -DCMAKE_BUILD_TYPE=RELEASE
+
+
+in main.cpp
+franka::Robot robot("172.16.2.2", franka::RealtimeConfig::kIgnore);
+
+
+
+
+
+
+
