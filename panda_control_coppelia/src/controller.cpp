@@ -3,7 +3,8 @@
 #include <iomanip>
 #include <cmath>
 
-FILE* fp1 = fopen("../max_vel.txt", "r");
+FILE* fp1 = fopen("../max_vel1.txt", "r");
+FILE* fp2 = fopen("../max_vel2.txt", "r");
 
 void ArmController::compute()
 {
@@ -92,6 +93,12 @@ void ArmController::compute()
 		check_planned = true;
 		check_planned1 = true;
 		print_once = true;
+
+		
+		target_positions.clear();
+		pointings.clear();
+		norms.clear();
+		durations.clear();
 	}
 
 	if (control_mode_ == "joint_ctrl_home")
@@ -109,7 +116,7 @@ void ArmController::compute()
 	}
 	else if (control_mode_ == "project_init") {
 		double duration = 3.0;
-		Vector3d project_translation; //������Ʈ ����� ��ǥ��� �̵�
+		Vector3d project_translation;
 		project_translation << 0.58, 0, 0.15;
 
 		Vector3d target_x_position;
@@ -453,6 +460,7 @@ void ArmController::compute()
 		//AStar::CoordinateListf robot_path;
 		////target_position[0] << 0.58, 0, 0.15;
 		if (check_planned == true) {
+			
 			findpath(robot_path1, robot_path2, robot_path3);
 			robot_path2.erase(robot_path2.begin());
 			robot_path3.erase(robot_path3.begin());
@@ -487,11 +495,6 @@ void ArmController::compute()
 		// }
 
 		if (check_planned1 == true) {
-			for (int i = 0; i < path_size1 + path_size2 + path_size3; i++) {
-				target_positions[i] = target_positions[i];
-			}
-
-
 			for (int i = 0; i < path_size1 + path_size2 + path_size3 - 1; i++) {
 				/*if (i == path_size1 + path_size2 + path_size3 - 2) {
 				pointings[i] = target_positions[path_size1 + path_size2 + path_size3 - 1] - target_positions[path_size1 + path_size2 + path_size3 - 2];
@@ -607,7 +610,23 @@ void ArmController::compute()
 			x_error = x_desired - x_from_q_desired_;
 			rot_error = DyrosMath::getPhi(rot_desired, rotation_from_q_desired_);
 
-			j_pseudo_inverse = (j_from_q_desired_.transpose()) * ((j_from_q_desired_ * (j_from_q_desired_.transpose())).inverse());
+			// j_pseudo_inverse = (j_from_q_desired_.transpose()) * ((j_from_q_desired_ * (j_from_q_desired_.transpose())).inverse());
+			Matrix6d damping;
+			// damping = EYE(6);
+			damping << 1, 0, 0, 0, 0, 0,
+						0, 1, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0,
+						0, 0, 0, 1, 0, 0,
+						0, 0, 0, 0, 1, 0,
+						0, 0, 0, 0, 0, 1;	
+			// damping << 0, 0, 0, 0, 0, 0,
+			// 			0, 0, 0, 0, 0, 0,
+			// 			0, 0, 1, 0, 0, 0,
+			// 			0, 0, 0, 0, 0, 0,
+			// 			0, 0, 0, 0, 0, 0,
+			// 			0, 0, 0, 0, 0, 0;
+			j_pseudo_inverse = (j_from_q_desired_.transpose()) * ((j_from_q_desired_ * (j_from_q_desired_.transpose())+0.002*damping).inverse());
+
 		
 
 			x_rot_error << x_error, rot_error;
@@ -616,8 +635,224 @@ void ArmController::compute()
 			Vector3d K_p_x;
 			Vector3d K_p_rot;
 
-			K_p_x <<100.0, 100.0, 100.0;
-			K_p_rot <<100.0, 100.0, 100.0;
+			K_p_x <<1.0, 1.0, 1.0;
+			K_p_rot <<1.0, 1.0, 1.0;
+			K_p << K_p_x, K_p_rot;
+
+			for (int i = 0; i < 6; i++)
+			{
+				K_p_dot_x_rot_error(i) = K_p(i) * x_rot_error(i);
+			}
+			if (k == 0) {
+				qdot_ = j_pseudo_inverse * (v_w_desired + K_p_dot_x_rot_error);
+			}
+			else {
+				qdot_ = j_pseudo_inverse * K_p_dot_x_rot_error;
+			}
+			q_desired_ = q_desired_ + qdot_ / hz_;
+		}
+		if (write_ == true) {
+		writeFile << (play_time_ - control_start_time_) << "\t" <<  x_.transpose() << "\t" << x_dot_.head(3).transpose() << "\n";
+		}
+	}
+
+	/////////////////////////////////////////////////////////////////
+	else if (control_mode_ == "project_function2") {
+	
+		if (write_init_ == true) {
+			path = "../data/projecyt.txt";
+			writeFile.open(path);
+			write_init_ = false;
+			write_ = true;
+		}
+		double duration = 5.0;
+		if (play_time_ > control_start_time_ + duration)
+		{
+			write_ = false;
+			closeFile();
+		}
+
+		//AStar::CoordinateListf robot_path;
+		////target_position[0] << 0.58, 0, 0.15;
+		if (check_planned == true) {
+			findpath(robot_path1, robot_path2, robot_path3);
+			robot_path2.erase(robot_path2.begin());
+			robot_path3.erase(robot_path3.begin());
+			target_positions.insert(target_positions.end(), robot_path1.begin(), robot_path1.end());
+			target_positions.insert(target_positions.end(), robot_path2.begin(), robot_path2.end());
+			target_positions.insert(target_positions.end(), robot_path3.begin(), robot_path3.end());
+
+			check_planned = false;
+		}
+
+		// max_velocity = 0.3;
+		fscanf(fp2, "%lf", &max_velocity);
+		// std::cout << "file read, max_velocity : " << max_velocity << std::endl;
+
+		Matrix3d target_rotation;
+		target_rotation.block<3, 1>(0, 0) << 1.0, 0.0, 0.0;
+		target_rotation.block<3, 1>(0, 1) << 0.0, -1.0, 0.0;
+		target_rotation.block<3, 1>(0, 2) << 0.0, 0.0, -1.0;
+
+		Matrix3d rot_to_desired;
+		rot_to_desired = rotation_init_.transpose() * rotation_init_;
+
+		AngleAxisd angle_axis;
+		angle_axis.fromRotationMatrix(rot_to_desired);
+
+		path_size1 = robot_path1.size();
+		path_size2 = robot_path2.size();
+		path_size3 = robot_path3.size();
+
+		// for (int i = 0; i < target_positions.size() ; i++){
+		// std::cout << target_positions[i].transpose() << std::endl;
+		// }
+
+		if (check_planned1 == true) {
+			for (int i = 0; i < path_size1 + path_size2 + path_size3 - 1; i++) {
+				/*if (i == path_size1 + path_size2 + path_size3 - 2) {
+				pointings[i] = target_positions[path_size1 + path_size2 + path_size3 - 1] - target_positions[path_size1 + path_size2 + path_size3 - 2];
+				}
+				else {
+				pointings[i] = target_positions[i + 1] - target_positions[i];
+				}*/
+				pointings.push_back(target_positions[i + 1] - target_positions[i]);
+				norms.push_back(pointings[i].norm());
+				durations.push_back(norms[i] / max_velocity); //duration gain?
+			}
+			/*double duration;
+			for (int i = 0; i < path_size1 + path_size2 + path_size3 - 1; i++) {
+			duration += durations[i];
+			}*/
+
+			for (int i = 0; i < path_size1 + path_size2 + path_size3 - 1; i++) {
+				pointings[i] = pointings[i] / norms[i] * max_velocity;
+			}
+			Vector3d zero_vec;
+			zero_vec << 0.0, 0.0, 0.0;
+			pointings.erase(pointings.begin());
+			pointings.insert(pointings.begin(), zero_vec);
+			pointings.insert(pointings.end(), zero_vec);
+			pointings[path_size1-1] = zero_vec;
+			pointings[path_size1+path_size2-1] = zero_vec;
+			check_planned1 = false;
+		}
+
+		/*control_start_time_update_ = control_start_time_;
+		control_start_time_update_before = control_start_time_;*/
+
+		if (play_time_ == control_start_time_)
+		{
+			index = 0;
+			control_start_time_update_ = control_start_time_;
+			control_start_time_update_before = control_start_time_;
+		}
+		if (Isonce == true) {
+			control_start_time_update_ = control_start_time_update_ + durations[index];
+			Isonce = false;
+		}
+		if (play_time_ < control_start_time_update_) {
+
+			for (int j = 0; j < 3; j++)
+			{
+				////std::cout << "fucking" << std::endl;
+				//std::cout << "target_positions[index] \n" << target_positions[index] << std::endl << std::endl;
+				//std::cout << "target_positions[index+1] \n" << target_positions[index + 1] << std::endl << std::endl;
+				//std::cout << "pointings[index] \n" << pointings[index] << std::endl << std::endl;
+				//std::cout << "pointings[index+1] \n" << pointings[index + 1] << std::endl << std::endl;
+				x_desired(j) = DyrosMath::cubic(play_time_, control_start_time_update_before, control_start_time_update_, target_positions[index](j), target_positions[index + 1](j), pointings[index](j), pointings[index + 1](j));
+				x_dot_desired(j) = DyrosMath::cubicDot(play_time_, control_start_time_update_before, control_start_time_update_, target_positions[index](j), target_positions[index + 1](j), pointings[index](j), pointings[index + 1](j), hz_);
+			}
+		}
+		else {
+			Isonce = true;
+			control_start_time_update_before = control_start_time_update_;
+			if (index < path_size1 + path_size2 + path_size3 - 2) {
+				index = index + 1;
+			}
+			else {
+				if(print_once == true)
+				{
+					std::cout << play_time_ - control_start_time_ << std::endl;
+					print_once = false;
+				}
+
+				Isonce = false;
+				// std::cout << x_desired.transpose() << "   " << x_dot_desired.transpose() << std::endl;
+				// std::cout << "x desired: " << x_desired.transpose() << "    " << "xdot desired: " <<x_dot_desired.transpose() << std::endl;
+				x_desired << 0.5, -0.18, 0.15;
+				x_dot_desired << 0.0, 0.0, 0.0;
+			}
+		}
+
+		double angle_desired;
+		double angle_dot_desired;
+
+		angle_desired = DyrosMath::cubic(play_time_, control_start_time_, control_start_time_ + 2, 0, angle_axis.angle(), 0.0, 0.0);
+		angle_dot_desired = DyrosMath::cubicDot(play_time_, control_start_time_, control_start_time_ + 2, 0, angle_axis.angle(), 0.0, 0.0, hz_);
+
+		Vector3d angular_velocity_desired;
+		Matrix3d rot_from_angle_axis;
+
+		rot_from_angle_axis = angle_axis.matrix();
+
+		rot_desired = rotation_init_ * rot_from_angle_axis;
+		angular_velocity_desired = angle_dot_desired * angle_axis.axis();
+
+		Vector6d v_w_desired;
+		Matrix<double, 7, 6> j_pseudo_inverse;
+
+		v_w_desired << x_dot_desired, angular_velocity_desired;
+
+		
+		Vector6d x_rot_error;
+		Vector3d x_error;
+
+		Vector3d rot_error;
+		Vector6d K_p_dot_x_rot_error;
+
+		for (int k = 0; k < 1; k++) {
+	#ifdef USING_REAL_ROBOT
+			Eigen::Affine3d transform_from_q_desired = model_interface_.getTransform(franka::Frame::kEndEffector,
+			q_desired_);
+			x_from_q_desired_ = transform_from_q_desired.translation();
+			rotation_from_q_desired_ = transform_from_q_desired.linear();
+			j_from_q_desired_ = model_interface_.getJacobianMatrix(franka::Frame::kEndEffector, q_desired_);	
+	#else
+			x_from_q_desired_ = CalcBodyToBaseCoordinates(*model_, q_desired_, body_id_[DOF - 1], com_position_[DOF - 1], false);
+			rotation_from_q_desired_ = CalcBodyWorldOrientation(*model_, q_desired_, body_id_[DOF - 1], false).transpose();
+			rotation_from_q_desired_ = rotation_from_q_desired_ * body_to_ee_rotation; // To Match RBDL model and CoppeliaSim model
+	#endif
+			x_error = x_desired - x_from_q_desired_;
+			// x_error = x_desired - x_;
+			rot_error = DyrosMath::getPhi(rot_desired, rotation_from_q_desired_);
+
+			// j_pseudo_inverse = (j_from_q_desired_.transpose()) * ((j_from_q_desired_ * (j_from_q_desired_.transpose())).inverse());
+			Matrix6d damping;
+			// damping = EYE(6);
+			damping << 1, 0, 0, 0, 0, 0,
+						0, 1, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0,
+						0, 0, 0, 1, 0, 0,
+						0, 0, 0, 0, 1, 0,
+						0, 0, 0, 0, 0, 1;	
+			// damping << 0, 0, 0, 0, 0, 0,
+			// 			0, 0, 0, 0, 0, 0,
+			// 			0, 0, 1, 0, 0, 0,
+			// 			0, 0, 0, 0, 0, 0,
+			// 			0, 0, 0, 0, 0, 0,
+			// 			0, 0, 0, 0, 0, 0;				
+			j_pseudo_inverse = (j_from_q_desired_.transpose()) * ((j_from_q_desired_ * (j_from_q_desired_.transpose()) + 0.003*damping).inverse());
+		
+
+			x_rot_error << x_error, rot_error;
+
+			Vector6d K_p;
+			Vector3d K_p_x;
+			Vector3d K_p_rot;
+
+			K_p_x <<1.0, 1.0, 1.0;
+			K_p_rot <<1.0, 1.0, 1.0;
 			K_p << K_p_x, K_p_rot;
 
 			for (int i = 0; i < 6; i++)
@@ -822,34 +1057,48 @@ void ArmController::findpath(vector<Vector3d>& robot_path1, vector<Vector3d>& ro
 	// AStar::Obs2i real_obs1{ 0.02,0.0,0.08 };
 	// AStar::Obs2i real_obs2{ -0.01,0.145,0.1 };
 	// AStar::Obs2i real_obs3{ -0.05,-0.11,0.1 };
-	// //first
+	
+	// //first (max vel 0.26 damping 0.003, 4.224s)
 	// AStar::Obs2i real_obs1{ -0.01,0.145,0.1 };
 	// AStar::Obs2i real_obs2{ -0.05,-0.11,0.09 };
 	// AStar::Obs2i real_obs3{ 0.02,0.0,0.08 };
-	// //second
+	
+	// //second (max vel 0.26 damping 0.003, 3.679s)
 	// AStar::Obs2i real_obs1{ 0.05,0.0,0.1 };
 	// AStar::Obs2i real_obs2{ -0.025,0.12,0.09 };
 	// AStar::Obs2i real_obs3{ -0.09,0.0,0.08 };	
-	// //third
+	
+	// //third (max vel 0.26 damping 0.003, 3.909s)
 	// AStar::Obs2i real_obs1{ 0.05,    0.0,     0.1 };
 	// AStar::Obs2i real_obs2{ -0.05,   0.1,     0.09 };
 	// AStar::Obs2i real_obs3{ -0.05,   -0.1,    0.08 };
-	// //fourth
+	
+	// //fourth (max vel 0.26 damping 0.003, 4.096s)
 	// AStar::Obs2i real_obs1{ 0.0,     0.15,    0.1 };
 	// AStar::Obs2i real_obs2{ -0.05,   0.0,     0.09 };
 	// AStar::Obs2i real_obs3{ 0.05,    -0.08,   0.08 };
-	// //fifth
+	
+	// //fifth (max vel 0.26 damping 0.003, 3.803s)
 	// AStar::Obs2i real_obs1{ 0.05,    -0.1,    0.1 };
 	// AStar::Obs2i real_obs2{ 0.05,    0.05,    0.09 };
 	// AStar::Obs2i real_obs3{ -0.06,   -0.03,   0.08 };
-	// //sixth
-	// AStar::Obs2i real_obs1{ -0.01,   0.16,    0.1 };
-	// AStar::Obs2i real_obs2{ -0.01,   0.015,   0.09 };
-	// AStar::Obs2i real_obs3{ -0.02,   -0.12,   0.08 };
-	//seventh
-	AStar::Obs2i real_obs1{ 0.01,    0.16,    0.1 };
+	
+	//sixth
+	//(max vel 0.26 damping 0.003, 4.14s)
+	//(max vel 0.28 damping 0.003, 3.845s) z:+0.1594 zzzzzzzzz
+	//(max vel 0.275 damping 0.003, 3.915s) z:+0.1586
+	//(max vel 0.27 damping 0.003, 3.987s) z:+0.1572
+	AStar::Obs2i real_obs1{ -0.01,   0.16,    0.1 };
 	AStar::Obs2i real_obs2{ -0.01,   0.015,   0.09 };
 	AStar::Obs2i real_obs3{ -0.02,   -0.12,   0.08 };
+	
+	// //seventh
+	// //(max vel 0.26, damping 0.003, 4.115s)
+	// //(max vel 0.26, damping 0.003, duration gain 0.95, 3.91s)
+	// //(max vel 0.25, damping 0.003, duration gain 0.90, 3.852s)
+	// AStar::Obs2i real_obs1{ 0.01,    0.16,    0.1 };
+	// AStar::Obs2i real_obs2{ -0.01,   0.015,   0.09 };
+	// AStar::Obs2i real_obs3{ -0.02,   -0.12,   0.08 };
 
 	double safety_value = 0.02;	//real size		
 

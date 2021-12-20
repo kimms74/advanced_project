@@ -46,6 +46,7 @@ void inputCollector()
         MODE('1', "project_home")
         MODE('2', "project_init")
         MODE('3', "project_function")
+        MODE('4', "project_function2")
       default:
         break;
       }
