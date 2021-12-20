@@ -74,7 +74,7 @@ void AStar::Generator::Simplepath(CoordinateList& path, Obs2i& obs1, Obs2i& obs2
         double radius_gain = 2;
             if (d_col[0] > (obss[0].d / radius_gain) && d_col[1] > (obss[1].d / radius_gain) && d_col[2] > (obss[2].d / radius_gain)) {
                 //std::cout << "iter : " << i << std::endl;
-                grid_map[path[i + 1].x][path[i + 1].y] = "0";
+                grid_map[path[i + 1].x][path[i + 1].y] = "^";
                 path.erase(path.begin() + i + 1);
                 i--;
             }
@@ -181,7 +181,7 @@ void AStar::Generator::setWorldSize(Vec2i worldSize_, int grid_multiplier_)
     worldSize.y = worldSize_.y * grid_multiplier_;
     grid_multiplier = grid_multiplier_;
 
-    grid_map.resize(worldSize.x, std::vector<std::string>(worldSize.y, "0"));
+    grid_map.resize(worldSize.x, std::vector<std::string>(worldSize.y, "^"));
 }
 
 void AStar::Generator::setDiagonalMovement(bool enable_)

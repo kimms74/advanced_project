@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <cmath>
 
-FILE* fp1 = fopen("max_vel.txt", "r");
+FILE* fp1 = fopen("../max_vel.txt", "r");
 
 void ArmController::compute()
 {
@@ -32,6 +32,7 @@ void ArmController::compute()
 	rotation_from_q_desired_ = transform_from_q_desired.linear();
 	j_from_q_desired_ = model_interface_.getJacobianMatrix(franka::Frame::kEndEffector, q_desired_);
 	g_.setZero();
+	x_dot_ = j_ * qdot_;
 #else  // USING_REAL_ROBOT
 	dt_ = 1 / hz_;
 	q_temp_ = q_;
@@ -90,6 +91,7 @@ void ArmController::compute()
 
 		check_planned = true;
 		check_planned1 = true;
+		print_once = true;
 	}
 
 	if (control_mode_ == "joint_ctrl_home")
@@ -100,14 +102,14 @@ void ArmController::compute()
 		q_desired_ = cubicVector<7>(play_time_, control_start_time_, control_start_time_ + duration, q_init_, target_position, qdot_init_, qdot_target_);
 	}
 	else if (control_mode_ == "project_home") {
-		double duration = 1.0;
+		double duration = 3.0;
 		Vector7d target_position;
 		target_position << 0.0, M_PI / 6.0, 0.0, -M_PI * 2.0 / 3.0, 0.0, M_PI * 5.0 / 6.0, 0;
 		q_desired_ = cubicVector<7>(play_time_, control_start_time_, control_start_time_ + duration, q_init_, target_position, qdot_init_, qdot_target_);
 	}
 	else if (control_mode_ == "project_init") {
-		double duration = 1.0;
-		Vector3d project_translation; //ÇÁ·ÎÁ§Æ® °æ±âÀå ÁÂÇ¥°è·Î ÀÌµ¿
+		double duration = 3.0;
+		Vector3d project_translation; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
 		project_translation << 0.58, 0, 0.15;
 
 		Vector3d target_x_position;
@@ -183,12 +185,12 @@ void ArmController::compute()
 			K_p_dot_x_rot_error(i) = K_p(i) * x_rot_error(i);
 		}
 		qdot_ = j_pseudo_inverse * (v_w_desired + K_p_dot_x_rot_error);
-		q_desired_ = q_desired_ + qdot_ / hz_;
+		q_desired_ = q_desired_ + qdot_ * dt_;
 
 	}
 	//else if (control_mode_ == "project_test") {
 	//	
-	//	Vector3d project_translation; //ÇÁ·ÎÁ§Æ® °æ±âÀå ÁÂÇ¥°è·Î ÀÌµ¿
+	//	Vector3d project_translation; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
 	//	project_translation << 0.58, 0, 0.15;
 
 	//	Vector3d target_3;
@@ -198,7 +200,7 @@ void ArmController::compute()
 	//	Vector3d pointing;
 	//	pointing = target_3 - x_init_.head(3);
 	//	std::cout << "pointing : " << pointing << std::endl;
-	//	double norm = pointing.norm(); //distance ÀÌ±âµµ ÇÔ
+	//	double norm = pointing.norm(); //distance ï¿½Ì±âµµ ï¿½ï¿½
 
 	//	double duration = norm / 0.3;
 
@@ -279,7 +281,7 @@ void ArmController::compute()
 	//	
 	//	//AStar::CoordinateListf path;
 
-	//	Vector3d project_translation; //ÇÁ·ÎÁ§Æ® °æ±âÀå ÁÂÇ¥°è·Î ÀÌµ¿
+	//	Vector3d project_translation; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
 	//	project_translation << 0.58, 0, 0.15;
 
 	//	double max_velocity = 0.3;
@@ -294,7 +296,7 @@ void ArmController::compute()
 
 	//	Vector3d pointing_0_1;
 	//	pointing_0_1 = target_1 - target_0;
-	//	double norm_0_1 = pointing_0_1.norm(); //distance ÀÌ±âµµ ÇÔ
+	//	double norm_0_1 = pointing_0_1.norm(); //distance ï¿½Ì±âµµ ï¿½ï¿½
 	//	double duration_0_1 = norm_0_1 / max_velocity;
 
 	//	Vector3d target_2;
@@ -303,7 +305,7 @@ void ArmController::compute()
 
 	//	Vector3d pointing_1_2;
 	//	pointing_1_2 = target_2 - target_1;
-	//	double norm_1_2 = pointing_1_2.norm(); //distance ÀÌ±âµµ ÇÔ
+	//	double norm_1_2 = pointing_1_2.norm(); //distance ï¿½Ì±âµµ ï¿½ï¿½
 	//	double duration_1_2 = norm_1_2 / max_velocity;
 
 	//	pointing_1_2(0) = pointing_1_2(0) / norm_1_2 * max_velocity;
@@ -316,7 +318,7 @@ void ArmController::compute()
 
 	//	Vector3d pointing_2_3;
 	//	pointing_2_3 = target_3 - target_2;
-	//	double norm_2_3 = pointing_2_3.norm(); //distance ÀÌ±âµµ ÇÔ
+	//	double norm_2_3 = pointing_2_3.norm(); //distance ï¿½Ì±âµµ ï¿½ï¿½
 	//	double duration_2_3 = norm_2_3 / max_velocity;
 
 	//	pointing_2_3(0) = pointing_2_3(0) / norm_2_3 * max_velocity;;
@@ -434,299 +436,332 @@ void ArmController::compute()
 	}
 
 	else if (control_mode_ == "project_function") {
-	//AStar::CoordinateListf robot_path;
-	////target_position[0] << 0.58, 0, 0.15;
-	if (check_planned == true) {
-		findpath(robot_path1, robot_path2, robot_path3);
-		robot_path2.erase(robot_path2.begin());
-		robot_path3.erase(robot_path3.begin());
-		target_positions.insert(target_positions.end(), robot_path1.begin(), robot_path1.end());
-		target_positions.insert(target_positions.end(), robot_path2.begin(), robot_path2.end());
-		target_positions.insert(target_positions.end(), robot_path3.begin(), robot_path3.end());
-
-		check_planned = false;
-	}
-
-	double max_velocity;
-	fscanf(fp1, "%lf", &max_velocity);
-	std::cout << "file read, max_velocity : " << max_velocity << std::endl;
-
-	Matrix3d target_rotation;
-	target_rotation.block<3, 1>(0, 0) << 1.0, 0.0, 0.0;
-	target_rotation.block<3, 1>(0, 1) << 0.0, -1.0, 0.0;
-	target_rotation.block<3, 1>(0, 2) << 0.0, 0.0, -1.0;
-
-	Matrix3d rot_to_desired;
-	rot_to_desired = rotation_init_.transpose() * target_rotation;
-
-	AngleAxisd angle_axis;
-	angle_axis.fromRotationMatrix(rot_to_desired);
-
-	Vector3d x_desired;
-	Vector3d x_dot_desired;
-	Matrix3d rot_desired;
-
-	Vector3d init_position;
-	init_position << 0.58, 0.0, 0.15;
-
-	path_size1 = robot_path1.size();
-	path_size2 = robot_path2.size();
-	path_size3 = robot_path3.size();
-	if (check_planned1 == true) {
-		for (int i = 0; i < path_size1 + path_size2 + path_size3; i++) {
-			target_positions[i] = target_positions[i];
-		}
-
-
-		for (int i = 0; i < path_size1 + path_size2 + path_size3 - 1; i++) {
-			/*if (i == path_size1 + path_size2 + path_size3 - 2) {
-			   pointings[i] = target_positions[path_size1 + path_size2 + path_size3 - 1] - target_positions[path_size1 + path_size2 + path_size3 - 2];
-			}
-			else {
-			   pointings[i] = target_positions[i + 1] - target_positions[i];
-			}*/
-			pointings.push_back(target_positions[i + 1] - target_positions[i]);
-			norms.push_back(pointings[i].norm());
-			durations.push_back(norms[i] / max_velocity);
-		}
-		/*double duration;
-		for (int i = 0; i < path_size1 + path_size2 + path_size3 - 1; i++) {
-		   duration += durations[i];
-		}*/
-
-		for (int i = 0; i < path_size1 + path_size2 + path_size3 - 1; i++) {
-			pointings[i] = pointings[i] / norms[i] * max_velocity;
-		}
-		Vector3d zero_vec;
-		zero_vec << 0.0, 0.0, 0.0;
-		pointings.erase(pointings.begin());
-		pointings.insert(pointings.begin(), zero_vec);
-		pointings.insert(pointings.end(), zero_vec);
-		check_planned1 = false;
-	}
-
-	/*control_start_time_update_ = control_start_time_;
-	control_start_time_update_before = control_start_time_;*/
-
-	if (play_time_ == control_start_time_)
-	{
-		index = 0;
-		control_start_time_update_ = control_start_time_;
-		control_start_time_update_before = control_start_time_;
-	}
-	if (Isonce == true) {
-		control_start_time_update_ = control_start_time_update_ + durations[index];
-		Isonce = false;
-	}
-	if (play_time_ < control_start_time_update_) {
-
-		for (int j = 0; j < 3; j++)
-		{
-			////std::cout << "fucking" << std::endl;
-			//std::cout << "target_positions[index] \n" << target_positions[index] << std::endl << std::endl;
-			//std::cout << "target_positions[index+1] \n" << target_positions[index + 1] << std::endl << std::endl;
-			//std::cout << "pointings[index] \n" << pointings[index] << std::endl << std::endl;
-			//std::cout << "pointings[index+1] \n" << pointings[index + 1] << std::endl << std::endl;
-			x_desired(j) = DyrosMath::cubic(play_time_, control_start_time_update_before, control_start_time_update_, target_positions[index](j), target_positions[index + 1](j), pointings[index](j), pointings[index + 1](j));
-			x_dot_desired(j) = DyrosMath::cubicDot(play_time_, control_start_time_update_before, control_start_time_update_, target_positions[index](j), target_positions[index + 1](j), pointings[index](j), pointings[index + 1](j), hz_);
-		}
-	}
-	else {
-		Isonce = true;
-		control_start_time_update_before = control_start_time_update_;
-		if (index < path_size1 + path_size2 + path_size3 - 1) {
-			index = index + 1;
-		}
-		else {
-			Isonce = false;
-		}
-	}
-
-	double angle_desired;
-	double angle_dot_desired;
-
-	angle_desired = DyrosMath::cubic(play_time_, control_start_time_, control_start_time_ + 2, 0, angle_axis.angle(), 0.0, 0.0);
-	angle_dot_desired = DyrosMath::cubicDot(play_time_, control_start_time_, control_start_time_ + 2, 0, angle_axis.angle(), 0.0, 0.0, hz_);
-
-	Vector3d angular_velocity_desired;
-	Matrix3d rot_from_angle_axis;
-
-	rot_from_angle_axis = angle_axis.matrix();
-
-	rot_desired = rotation_init_ * rot_from_angle_axis;
-	angular_velocity_desired = angle_dot_desired * angle_axis.axis();
-
-	Vector6d v_w_desired;
-	Matrix<double, 7, 6> j_pseudo_inverse;
-
-	v_w_desired << x_dot_desired, angular_velocity_desired;
-
-	j_pseudo_inverse = (j_.transpose()) * ((j_ * (j_.transpose())).inverse());
-
-	Vector6d x_rot_error;
-	Vector3d x_error;
-
-	Vector3d rot_error;
-	Vector6d K_p_dot_x_rot_error;
-
-	for (int k = 0; k < 10; k++) {
-		x_from_q_desired_ = CalcBodyToBaseCoordinates(*model_, q_desired_, body_id_[DOF - 1], com_position_[DOF - 1], false);
-		rotation_from_q_desired_ = CalcBodyWorldOrientation(*model_, q_desired_, body_id_[DOF - 1], false).transpose();
-		rotation_from_q_desired_ = rotation_from_q_desired_ * body_to_ee_rotation; // To Match RBDL model and CoppeliaSim model
-
-		x_error = x_desired - x_from_q_desired_;
-		rot_error = DyrosMath::getPhi(rot_desired, rotation_from_q_desired_);
-
-		x_rot_error << x_error, rot_error;
-
-		Vector6d K_p;
-		Vector3d K_p_x;
-		Vector3d K_p_rot;
-
-		K_p_x << 1.0, 1.0, 1.0;
-		K_p_rot << 5.0, 5.0, 5.0;
-		K_p << K_p_x, K_p_rot;
-
-		for (int i = 0; i < 6; i++)
-		{
-			K_p_dot_x_rot_error(i) = K_p(i) * x_rot_error(i);
-		}
-		if (k == 0) {
-			qdot_ = j_pseudo_inverse * (v_w_desired + K_p_dot_x_rot_error);
-		}
-		else {
-			qdot_ = j_pseudo_inverse * K_p_dot_x_rot_error;
-		}
-		q_desired_ = q_desired_ + qdot_ / hz_;
-	}
-
-   }
-
-	else if (control_mode_ == "astar")
-	{
-		if (check_planned == true) {
-			findpath(robot_path1, robot_path2, robot_path3);
-			for (auto& coordinate : robot_path1) {
-				std::cout << coordinate.transpose() << "\n";
-			}
-
-			std::cout << "  " << std::endl;
-			for (auto& coordinate : robot_path2) {
-				std::cout << coordinate.transpose() << "\n";
-			}
-
-			std::cout << "  " << std::endl;
-			for (auto& coordinate : robot_path3) {
-				std::cout << coordinate.transpose() << "\n";
-			}
-			
-			check_planned = false;
-		}
-		double duration = 5.0;
-
-
-
+	
 		if (write_init_ == true) {
-			path = "../data/6_1.txt";
+			path = "../data/projecyt.txt";
 			writeFile.open(path);
 			write_init_ = false;
 			write_ = true;
 		}
+		double duration = 5.0;
 		if (play_time_ > control_start_time_ + duration)
 		{
 			write_ = false;
 			closeFile();
 		}
-		findDuration(robot_path1, duration_list);
 
-		double max_velocity = 0.3;
+		//AStar::CoordinateListf robot_path;
+		////target_position[0] << 0.58, 0, 0.15;
+		if (check_planned == true) {
+			findpath(robot_path1, robot_path2, robot_path3);
+			robot_path2.erase(robot_path2.begin());
+			robot_path3.erase(robot_path3.begin());
+			target_positions.insert(target_positions.end(), robot_path1.begin(), robot_path1.end());
+			target_positions.insert(target_positions.end(), robot_path2.begin(), robot_path2.end());
+			target_positions.insert(target_positions.end(), robot_path3.begin(), robot_path3.end());
 
-		if (play_time_ - control_start_time_ >= accum_duration)
+			check_planned = false;
+		}
+
+		// max_velocity = 0.3;
+		fscanf(fp1, "%lf", &max_velocity);
+		// std::cout << "file read, max_velocity : " << max_velocity << std::endl;
+
+		Matrix3d target_rotation;
+		target_rotation.block<3, 1>(0, 0) << 1.0, 0.0, 0.0;
+		target_rotation.block<3, 1>(0, 1) << 0.0, -1.0, 0.0;
+		target_rotation.block<3, 1>(0, 2) << 0.0, 0.0, -1.0;
+
+		Matrix3d rot_to_desired;
+		rot_to_desired = rotation_init_.transpose() * rotation_init_;
+
+		AngleAxisd angle_axis;
+		angle_axis.fromRotationMatrix(rot_to_desired);
+
+		path_size1 = robot_path1.size();
+		path_size2 = robot_path2.size();
+		path_size3 = robot_path3.size();
+
+		// for (int i = 0; i < target_positions.size() ; i++){
+		// std::cout << target_positions[i].transpose() << std::endl;
+		// }
+
+		if (check_planned1 == true) {
+			for (int i = 0; i < path_size1 + path_size2 + path_size3; i++) {
+				target_positions[i] = target_positions[i];
+			}
+
+
+			for (int i = 0; i < path_size1 + path_size2 + path_size3 - 1; i++) {
+				/*if (i == path_size1 + path_size2 + path_size3 - 2) {
+				pointings[i] = target_positions[path_size1 + path_size2 + path_size3 - 1] - target_positions[path_size1 + path_size2 + path_size3 - 2];
+				}
+				else {
+				pointings[i] = target_positions[i + 1] - target_positions[i];
+				}*/
+				pointings.push_back(target_positions[i + 1] - target_positions[i]);
+				norms.push_back(pointings[i].norm());
+				durations.push_back(norms[i] / max_velocity);
+			}
+			/*double duration;
+			for (int i = 0; i < path_size1 + path_size2 + path_size3 - 1; i++) {
+			duration += durations[i];
+			}*/
+
+			for (int i = 0; i < path_size1 + path_size2 + path_size3 - 1; i++) {
+				pointings[i] = pointings[i] / norms[i] * max_velocity;
+			}
+			Vector3d zero_vec;
+			zero_vec << 0.0, 0.0, 0.0;
+			pointings.erase(pointings.begin());
+			pointings.insert(pointings.begin(), zero_vec);
+			pointings.insert(pointings.end(), zero_vec);
+			check_planned1 = false;
+		}
+
+		/*control_start_time_update_ = control_start_time_;
+		control_start_time_update_before = control_start_time_;*/
+
+		if (play_time_ == control_start_time_)
 		{
-			std::cout << (play_time_ - control_start_time_) << " " << accum_duration << std::endl;
-			if (path_index != (robot_path1.size()-1))
+			index = 0;
+			control_start_time_update_ = control_start_time_;
+			control_start_time_update_before = control_start_time_;
+		}
+		if (Isonce == true) {
+			control_start_time_update_ = control_start_time_update_ + durations[index];
+			Isonce = false;
+		}
+		if (play_time_ < control_start_time_update_) {
+
+			for (int j = 0; j < 3; j++)
 			{
-				control_time = play_time_;
-				accum_duration += duration_list[path_index];
-				if (control_fisrt == true)
+				////std::cout << "fucking" << std::endl;
+				//std::cout << "target_positions[index] \n" << target_positions[index] << std::endl << std::endl;
+				//std::cout << "target_positions[index+1] \n" << target_positions[index + 1] << std::endl << std::endl;
+				//std::cout << "pointings[index] \n" << pointings[index] << std::endl << std::endl;
+				//std::cout << "pointings[index+1] \n" << pointings[index + 1] << std::endl << std::endl;
+				x_desired(j) = DyrosMath::cubic(play_time_, control_start_time_update_before, control_start_time_update_, target_positions[index](j), target_positions[index + 1](j), pointings[index](j), pointings[index + 1](j));
+				x_dot_desired(j) = DyrosMath::cubicDot(play_time_, control_start_time_update_before, control_start_time_update_, target_positions[index](j), target_positions[index + 1](j), pointings[index](j), pointings[index + 1](j), hz_);
+			}
+		}
+		else {
+			Isonce = true;
+			control_start_time_update_before = control_start_time_update_;
+			if (index < path_size1 + path_size2 + path_size3 - 2) {
+				index = index + 1;
+			}
+			else {
+				if(print_once == true)
 				{
-					control_fisrt = false;
-					std::cout << robot_path1[path_index].transpose() << std::endl;
+					std::cout << play_time_ - control_start_time_ << std::endl;
+					print_once = false;
 				}
-				else
-				{
-					path_index++;
-					std::cout << robot_path1[path_index].transpose() << std::endl;
-				}
+
+				Isonce = false;
+				// std::cout << x_desired.transpose() << "   " << x_dot_desired.transpose() << std::endl;
+				// std::cout << "x desired: " << x_desired.transpose() << "    " << "xdot desired: " <<x_dot_desired.transpose() << std::endl;
+				x_desired << 0.5, -0.18, 0.15;
+				x_dot_desired << 0.0, 0.0, 0.0;
 			}
 		}
 
-		x_cubic_ = cubicVector<3>(play_time_, control_time + accum_duration, control_time + accum_duration + duration_list[path_index], robot_path1[path_index], robot_path1[path_index + 1], x_dot_init_, x_dot_target_);
-		x_cubic_dot_1_ = cubicDotVector<3>(play_time_, control_time + accum_duration, control_time + accum_duration + duration_list[path_index], robot_path1[path_index], robot_path1[path_index + 1], x_dot_init_, x_dot_target_, hz_);
+		double angle_desired;
+		double angle_dot_desired;
 
-		//double vel1 = cubic(play_time_, control_start_time_, control_start_time_ + max_velocity, 0, max_velocity, 0.0, 0.0);
-		//if ((robot_path1[1] - x_cubic_).norm() <= (pow(max_velocity,2)/2))
-		//{
-		//	if (check_slow == false)
-		//	{
-		//		slow_start_time = play_time_;
-		//		check_slow = true;
-		//	}
-		//	vel1 = cubic(play_time_, slow_start_time, slow_start_time + max_velocity, max_velocity, 0, 0.0, 0.0);
-		//}
+		angle_desired = DyrosMath::cubic(play_time_, control_start_time_, control_start_time_ + 2, 0, angle_axis.angle(), 0.0, 0.0);
+		angle_dot_desired = DyrosMath::cubicDot(play_time_, control_start_time_, control_start_time_ + 2, 0, angle_axis.angle(), 0.0, 0.0, hz_);
 
-		//double vel1_norm = (robot_path1[1] - robot_path1[0]).norm();
-		//Vector3d dir1 = (robot_path1[1] - robot_path1[0]) / vel1_norm;
-		//x_cubic_dot_1_ = dir1 * vel1;
-		//x_cubic_ = x_cubic_ + x_cubic_dot_1_ * dt_;
+		Vector3d angular_velocity_desired;
+		Matrix3d rot_from_angle_axis;
 
-		x_target_ << 0.25, 0.28, 0.65;
-		rotation_target_ << 0.7071, 0.7071, 0, 0.7071, -0.7071, 0, 0, 0, -1;
-		x_dot_target_ << 0.0, 0.0, 0.0;
+		rot_from_angle_axis = angle_axis.matrix();
 
+		rot_desired = rotation_init_ * rot_from_angle_axis;
+		angular_velocity_desired = angle_dot_desired * angle_axis.axis();
 
-		Matrix3d rotation_init_to_target, rotation_from_angle_axis, rotation_desired;
-		AngleAxisd angle_axis_target, angle_axis_desired;
+		Vector6d v_w_desired;
+		Matrix<double, 7, 6> j_pseudo_inverse;
 
-		//rotation_init_to_target = rotation_init_.transpose() * rotation_target_;
-		rotation_init_to_target = rotation_init_.transpose() * rotation_init_;
-		angle_axis_target.fromRotationMatrix(rotation_init_to_target);
+		v_w_desired << x_dot_desired, angular_velocity_desired;
 
-		double angle_desired, angle_dot_desired;
-
+		
 		Vector6d x_rot_error;
-		Vector7d qdot_desired;
-		Matrix6d Kp;
+		Vector3d x_error;
 
-		//x_cubic_ = cubicVector<3>(play_time_, control_start_time_, control_start_time_ + duration, x_init_, x_target_, x_dot_init_, x_dot_target_);
-		//x_cubic_dot_1_ = cubicDotVector<3>(play_time_, control_start_time_, control_start_time_ + duration, x_init_, x_target_, x_dot_init_, x_dot_target_, hz_);
+		Vector3d rot_error;
+		Vector6d K_p_dot_x_rot_error;
 
-		angle_desired = cubic(play_time_, control_start_time_, control_start_time_ + duration, 0, angle_axis_target.angle(), 0.0, 0.0);
-		angle_dot_desired = cubicDot(play_time_, control_start_time_, control_start_time_ + duration, 0, angle_axis_target.angle(), 0.0, 0.0, hz_);
-		x_cubic_dot_2_ = angle_dot_desired * angle_axis_target.axis();
+		for (int k = 0; k < 1; k++) {
+	#ifdef USING_REAL_ROBOT
+			Eigen::Affine3d transform_from_q_desired = model_interface_.getTransform(franka::Frame::kEndEffector,
+			q_desired_);
+			x_from_q_desired_ = transform_from_q_desired.translation();
+			rotation_from_q_desired_ = transform_from_q_desired.linear();
+			j_from_q_desired_ = model_interface_.getJacobianMatrix(franka::Frame::kEndEffector, q_desired_);	
+	#else
+			x_from_q_desired_ = CalcBodyToBaseCoordinates(*model_, q_desired_, body_id_[DOF - 1], com_position_[DOF - 1], false);
+			rotation_from_q_desired_ = CalcBodyWorldOrientation(*model_, q_desired_, body_id_[DOF - 1], false).transpose();
+			rotation_from_q_desired_ = rotation_from_q_desired_ * body_to_ee_rotation; // To Match RBDL model and CoppeliaSim model
+	#endif
+			x_error = x_desired - x_from_q_desired_;
+			rot_error = DyrosMath::getPhi(rot_desired, rotation_from_q_desired_);
 
-		x_cubic_dot_ << x_cubic_dot_1_, x_cubic_dot_2_;
+			j_pseudo_inverse = (j_from_q_desired_.transpose()) * ((j_from_q_desired_ * (j_from_q_desired_.transpose())).inverse());
+		
 
-		angle_axis_desired = AngleAxisd(angle_desired, angle_axis_target.axis());
-		rotation_from_angle_axis = angle_axis_desired.toRotationMatrix();
-		rotation_desired = rotation_init_ * rotation_from_angle_axis;
+			x_rot_error << x_error, rot_error;
 
+			Vector6d K_p;
+			Vector3d K_p_x;
+			Vector3d K_p_rot;
 
-		j_inverse_ = (j_from_q_desired_.transpose()) * ((j_from_q_desired_ * (j_from_q_desired_.transpose())).inverse());
+			K_p_x <<100.0, 100.0, 100.0;
+			K_p_rot <<100.0, 100.0, 100.0;
+			K_p << K_p_x, K_p_rot;
 
-		x_rot_error.head(3) = x_cubic_ - x_from_q_desired_;
-		x_rot_error.tail(3) = getPhi(rotation_desired, rotation_);
-
-		Kp.block<3, 3>(0, 0) = EYE(3) * 1.0;
-		Kp.block<3, 3>(3, 3) = EYE(3) * 2.0;
-
-		qdot_desired = j_inverse_ * (x_cubic_dot_ + Kp * x_rot_error);
-		q_desired_ = q_desired_ + qdot_desired * dt_;
-
+			for (int i = 0; i < 6; i++)
+			{
+				K_p_dot_x_rot_error(i) = K_p(i) * x_rot_error(i);
+			}
+			if (k == 0) {
+				qdot_ = j_pseudo_inverse * (v_w_desired + K_p_dot_x_rot_error);
+			}
+			else {
+				qdot_ = j_pseudo_inverse * K_p_dot_x_rot_error;
+			}
+			q_desired_ = q_desired_ + qdot_ / hz_;
+		}
 		if (write_ == true) {
-			writeFile << (play_time_ - control_start_time_) << "\t" << x_target_.transpose() << "\t" << x_.transpose() << "\t" << x_rot_error.tail(3).transpose() << "\n";
+		writeFile << (play_time_ - control_start_time_) << "\t" <<  x_.transpose() << "\t" << x_dot_.head(3).transpose() << "\n";
 		}
 	}
+
+	// else if (control_mode_ == "astar")
+	// {
+	// 	if (check_planned == true) {
+	// 		findpath(robot_path1, robot_path2, robot_path3);
+	// 		for (auto& coordinate : robot_path1) {
+	// 			std::cout << coordinate.transpose() << "\n";
+	// 		}
+
+	// 		std::cout << "  " << std::endl;
+	// 		for (auto& coordinate : robot_path2) {
+	// 			std::cout << coordinate.transpose() << "\n";
+	// 		}
+
+	// 		std::cout << "  " << std::endl;
+	// 		for (auto& coordinate : robot_path3) {
+	// 			std::cout << coordinate.transpose() << "\n";
+	// 		}
+			
+	// 		check_planned = false;
+	// 	}
+	// 	double duration = 5.0;
+
+
+
+	// 	if (write_init_ == true) {
+	// 		path = "../data/6_1.txt";
+	// 		writeFile.open(path);
+	// 		write_init_ = false;
+	// 		write_ = true;
+	// 	}
+	// 	if (play_time_ > control_start_time_ + duration)
+	// 	{
+	// 		write_ = false;
+	// 		closeFile();
+	// 	}
+	// 	findDuration(robot_path1, duration_list);
+
+	// 	double max_velocity = 0.3;
+
+	// 	if (play_time_ - control_start_time_ >= accum_duration)
+	// 	{
+	// 		std::cout << (play_time_ - control_start_time_) << " " << accum_duration << std::endl;
+	// 		if (path_index != (robot_path1.size()-1))
+	// 		{
+	// 			control_time = play_time_;
+	// 			accum_duration += duration_list[path_index];
+	// 			if (control_fisrt == true)
+	// 			{
+	// 				control_fisrt = false;
+	// 				std::cout << robot_path1[path_index].transpose() << std::endl;
+	// 			}
+	// 			else
+	// 			{
+	// 				path_index++;
+	// 				std::cout << robot_path1[path_index].transpose() << std::endl;
+	// 			}
+	// 		}
+	// 	}
+
+	// 	x_cubic_ = cubicVector<3>(play_time_, control_time + accum_duration, control_time + accum_duration + duration_list[path_index], robot_path1[path_index], robot_path1[path_index + 1], x_dot_init_, x_dot_target_);
+	// 	x_cubic_dot_1_ = cubicDotVector<3>(play_time_, control_time + accum_duration, control_time + accum_duration + duration_list[path_index], robot_path1[path_index], robot_path1[path_index + 1], x_dot_init_, x_dot_target_, hz_);
+
+	// 	//double vel1 = cubic(play_time_, control_start_time_, control_start_time_ + max_velocity, 0, max_velocity, 0.0, 0.0);
+	// 	//if ((robot_path1[1] - x_cubic_).norm() <= (pow(max_velocity,2)/2))
+	// 	//{
+	// 	//	if (check_slow == false)
+	// 	//	{
+	// 	//		slow_start_time = play_time_;
+	// 	//		check_slow = true;
+	// 	//	}
+	// 	//	vel1 = cubic(play_time_, slow_start_time, slow_start_time + max_velocity, max_velocity, 0, 0.0, 0.0);
+	// 	//}
+
+	// 	//double vel1_norm = (robot_path1[1] - robot_path1[0]).norm();
+	// 	//Vector3d dir1 = (robot_path1[1] - robot_path1[0]) / vel1_norm;
+	// 	//x_cubic_dot_1_ = dir1 * vel1;
+	// 	//x_cubic_ = x_cubic_ + x_cubic_dot_1_ * dt_;
+
+	// 	x_target_ << 0.25, 0.28, 0.65;
+	// 	rotation_target_ << 0.7071, 0.7071, 0, 0.7071, -0.7071, 0, 0, 0, -1;
+	// 	x_dot_target_ << 0.0, 0.0, 0.0;
+
+
+	// 	Matrix3d rotation_init_to_target, rotation_from_angle_axis, rotation_desired;
+	// 	AngleAxisd angle_axis_target, angle_axis_desired;
+
+	// 	//rotation_init_to_target = rotation_init_.transpose() * rotation_target_;
+	// 	rotation_init_to_target = rotation_init_.transpose() * rotation_init_;
+	// 	angle_axis_target.fromRotationMatrix(rotation_init_to_target);
+
+	// 	double angle_desired, angle_dot_desired;
+
+	// 	Vector6d x_rot_error;
+	// 	Vector7d qdot_desired;
+	// 	Matrix6d Kp;
+
+	// 	//x_cubic_ = cubicVector<3>(play_time_, control_start_time_, control_start_time_ + duration, x_init_, x_target_, x_dot_init_, x_dot_target_);
+	// 	//x_cubic_dot_1_ = cubicDotVector<3>(play_time_, control_start_time_, control_start_time_ + duration, x_init_, x_target_, x_dot_init_, x_dot_target_, hz_);
+
+	// 	angle_desired = cubic(play_time_, control_start_time_, control_start_time_ + duration, 0, angle_axis_target.angle(), 0.0, 0.0);
+	// 	angle_dot_desired = cubicDot(play_time_, control_start_time_, control_start_time_ + duration, 0, angle_axis_target.angle(), 0.0, 0.0, hz_);
+	// 	x_cubic_dot_2_ = angle_dot_desired * angle_axis_target.axis();
+
+	// 	x_cubic_dot_ << x_cubic_dot_1_, x_cubic_dot_2_;
+
+	// 	angle_axis_desired = AngleAxisd(angle_desired, angle_axis_target.axis());
+	// 	rotation_from_angle_axis = angle_axis_desired.toRotationMatrix();
+	// 	rotation_desired = rotation_init_ * rotation_from_angle_axis;
+
+
+	// 	j_inverse_ = (j_from_q_desired_.transpose()) * ((j_from_q_desired_ * (j_from_q_desired_.transpose())).inverse());
+
+	// 	x_rot_error.head(3) = x_cubic_ - x_from_q_desired_;
+	// 	x_rot_error.tail(3) = getPhi(rotation_desired, rotation_);
+
+	// 	Kp.block<3, 3>(0, 0) = EYE(3) * 1.0;
+	// 	Kp.block<3, 3>(3, 3) = EYE(3) * 2.0;
+
+	// 	qdot_desired = j_inverse_ * (x_cubic_dot_ + Kp * x_rot_error);
+	// 	q_desired_ = q_desired_ + qdot_desired * dt_;
+
+	// 	if (write_ == true) {
+	// 		writeFile << (play_time_ - control_start_time_) << "\t" << x_target_.transpose() << "\t" << x_.transpose() << "\t" << x_rot_error.tail(3).transpose() << "\n";
+	// 	}
+	// }
 
 	else
 	{
@@ -784,9 +819,38 @@ void ArmController::findpath(vector<Vector3d>& robot_path1, vector<Vector3d>& ro
 	int width = 40;
 
 	//distance from centor of map using panda coordinate & diameter
-	AStar::Obs2i real_obs1{ 0.02,0.0,0.08 };
-	AStar::Obs2i real_obs2{ -0.01,0.145,0.1 };
-	AStar::Obs2i real_obs3{ -0.05,-0.11,0.1 };
+	// AStar::Obs2i real_obs1{ 0.02,0.0,0.08 };
+	// AStar::Obs2i real_obs2{ -0.01,0.145,0.1 };
+	// AStar::Obs2i real_obs3{ -0.05,-0.11,0.1 };
+	// //first
+	// AStar::Obs2i real_obs1{ -0.01,0.145,0.1 };
+	// AStar::Obs2i real_obs2{ -0.05,-0.11,0.09 };
+	// AStar::Obs2i real_obs3{ 0.02,0.0,0.08 };
+	// //second
+	// AStar::Obs2i real_obs1{ 0.05,0.0,0.1 };
+	// AStar::Obs2i real_obs2{ -0.025,0.12,0.09 };
+	// AStar::Obs2i real_obs3{ -0.09,0.0,0.08 };	
+	// //third
+	// AStar::Obs2i real_obs1{ 0.05,    0.0,     0.1 };
+	// AStar::Obs2i real_obs2{ -0.05,   0.1,     0.09 };
+	// AStar::Obs2i real_obs3{ -0.05,   -0.1,    0.08 };
+	// //fourth
+	// AStar::Obs2i real_obs1{ 0.0,     0.15,    0.1 };
+	// AStar::Obs2i real_obs2{ -0.05,   0.0,     0.09 };
+	// AStar::Obs2i real_obs3{ 0.05,    -0.08,   0.08 };
+	// //fifth
+	// AStar::Obs2i real_obs1{ 0.05,    -0.1,    0.1 };
+	// AStar::Obs2i real_obs2{ 0.05,    0.05,    0.09 };
+	// AStar::Obs2i real_obs3{ -0.06,   -0.03,   0.08 };
+	// //sixth
+	// AStar::Obs2i real_obs1{ -0.01,   0.16,    0.1 };
+	// AStar::Obs2i real_obs2{ -0.01,   0.015,   0.09 };
+	// AStar::Obs2i real_obs3{ -0.02,   -0.12,   0.08 };
+	//seventh
+	AStar::Obs2i real_obs1{ 0.01,    0.16,    0.1 };
+	AStar::Obs2i real_obs2{ -0.01,   0.015,   0.09 };
+	AStar::Obs2i real_obs3{ -0.02,   -0.12,   0.08 };
+
 	double safety_value = 0.02;	//real size		
 
 	AStar::Obs2i obs1;
@@ -810,9 +874,9 @@ void ArmController::findpath(vector<Vector3d>& robot_path1, vector<Vector3d>& ro
 	generator.changeGridObs(real_obs1, real_obs2, real_obs3, obs1, obs2, obs3, safety_value);
 	generator.addCollision(obs1, obs2, obs3);
 
-	std::cout << obs1.x << " " << obs1.y << " " << obs1.d << std::endl;
-	std::cout << obs2.x << " " << obs2.y << " " << obs2.d << std::endl;
-	std::cout << obs3.x << " " << obs3.y << " " << obs3.d << std::endl;
+	// std::cout << obs1.x << " " << obs1.y << " " << obs1.d << std::endl;
+	// std::cout << obs2.x << " " << obs2.y << " " << obs2.d << std::endl;
+	// std::cout << obs3.x << " " << obs3.y << " " << obs3.d << std::endl;
 
 	std::cout << "Generate path ... \n";
 	//To do: make real input position to grid position?

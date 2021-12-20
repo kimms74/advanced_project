@@ -4,9 +4,10 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/src/controller.cpp" "/home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/build/CMakeFiles/panda_control_real.dir/src/controller.cpp.o"
-  "/home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/src/main_real.cpp" "/home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/build/CMakeFiles/panda_control_real.dir/src/main_real.cpp.o"
-  "/home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/src/motion_generator.cpp" "/home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/build/CMakeFiles/panda_control_real.dir/src/motion_generator.cpp.o"
+  "/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/src/Astar.cpp" "/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/build/CMakeFiles/panda_control_real.dir/src/Astar.cpp.o"
+  "/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/src/controller.cpp" "/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/build/CMakeFiles/panda_control_real.dir/src/controller.cpp.o"
+  "/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/src/main_real.cpp" "/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/build/CMakeFiles/panda_control_real.dir/src/main_real.cpp.o"
+  "/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/src/motion_generator.cpp" "/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/build/CMakeFiles/panda_control_real.dir/src/motion_generator.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

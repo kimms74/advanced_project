@@ -3,7 +3,7 @@
 
 //////////////////////////////////////////////////
 //   for both real and simulation environment   //
-//#define USING_REAL_ROBOT
+#define USING_REAL_ROBOT
 //////////////////////////////////////////////////
 
 #include <iostream>
@@ -178,6 +178,11 @@ class ArmController
 	double control_start_time_update_before;
 	int index;
 	bool Isonce = true;
+	Vector3d x_desired;
+	Vector3d x_dot_desired;
+	Matrix3d rot_desired;
+	double max_velocity;
+	bool print_once;
 
 private:
 	void printState();

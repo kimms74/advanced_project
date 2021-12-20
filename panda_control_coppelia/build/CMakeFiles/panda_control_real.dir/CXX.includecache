@@ -6,6 +6,20 @@
 
 #IncludeRegexTransform: 
 
+../include/Astar.h
+vector
+-
+functional
+-
+set
+-
+math.h
+-
+algorithm
+-
+iostream
+-
+
 ../include/controller.h
 iostream
 -
@@ -19,6 +33,8 @@ fstream
 -
 math_type_define.h
 ../include/math_type_define.h
+Astar.h
+../include/Astar.h
 franka_model_interface.h
 ../include/franka_model_interface.h
 
@@ -62,9 +78,27 @@ unistd.h
 fcntl.h
 -
 
-/home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/src/controller.cpp
+/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/include/Astar.h
+vector
+-
+functional
+-
+set
+-
+math.h
+-
+algorithm
+-
+iostream
+-
+
+/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/src/Astar.cpp
+../include/Astar.h
+/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/include/Astar.h
+
+/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/src/controller.cpp
 controller.h
-/home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/src/controller.h
+/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/src/controller.h
 iostream
 -
 iomanip
@@ -72,7 +106,7 @@ iomanip
 cmath
 -
 
-/home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/src/main_real.cpp
+/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/src/main_real.cpp
 sys/mman.h
 -
 iostream
@@ -90,15 +124,15 @@ franka/robot.h
 franka/model.h
 -
 controller.h
-/home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/src/controller.h
+/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/src/controller.h
 motion_generator.h
-/home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/src/motion_generator.h
+/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/src/motion_generator.h
 terminal_func.h
-/home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/src/terminal_func.h
+/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/src/terminal_func.h
 
-/home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/src/motion_generator.cpp
+/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/src/motion_generator.cpp
 motion_generator.h
-/home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/src/motion_generator.h
+/home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/src/motion_generator.h
 
 /home/dyros/libfranka/include/franka/command_types.h
 array

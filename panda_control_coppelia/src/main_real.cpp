@@ -43,10 +43,9 @@ void inputCollector()
         MODE('q', "torque_ctrl_init1")
         MODE('w', "torque_ctrl_init2")
         MODE('e', "torque_ctrl_init3")
-        MODE('1', "hw6-1")
-        MODE('2', "hw6-2-1")
-        MODE('3', "hw6-2-2")
-        MODE('4', "hw6-2-3")
+        MODE('1', "project_home")
+        MODE('2', "project_init")
+        MODE('3', "project_function")
       default:
         break;
       }

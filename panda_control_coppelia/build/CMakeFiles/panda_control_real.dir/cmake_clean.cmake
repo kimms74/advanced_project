@@ -2,6 +2,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/panda_control_real.dir/src/main_real.cpp.o"
   "CMakeFiles/panda_control_real.dir/src/controller.cpp.o"
   "CMakeFiles/panda_control_real.dir/src/motion_generator.cpp.o"
+  "CMakeFiles/panda_control_real.dir/src/Astar.cpp.o"
   "panda_control_real.pdb"
   "panda_control_real"
 )

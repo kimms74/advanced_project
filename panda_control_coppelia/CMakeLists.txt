@@ -19,7 +19,8 @@ ${EIGEN3_INCLUDE_DIRS})
 add_executable(${PROJECT_NAME} 
     src/main_real.cpp
     src/controller.cpp
-    src/motion_generator.cpp)
+    src/motion_generator.cpp
+    src/Astar.cpp)
 
 target_link_libraries(${PROJECT_NAME}
 Franka::Franka pthread

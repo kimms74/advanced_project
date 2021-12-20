@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia
+CMAKE_SOURCE_DIR = /home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/build
+CMAKE_BINARY_DIR = /home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/build/CMakeFiles /home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/build/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/build/CMakeFiles /home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/build/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/dyros/advanced_kms/advanced_robotics_project/panda_control_coppelia/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/dyros/Desktop/advanced_project_kms/advanced_project/panda_control_coppelia/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -122,6 +122,33 @@ panda_control_real: cmake_check_build_system
 panda_control_real/fast:
 	$(MAKE) -f CMakeFiles/panda_control_real.dir/build.make CMakeFiles/panda_control_real.dir/build
 .PHONY : panda_control_real/fast
+
+src/Astar.o: src/Astar.cpp.o
+
+.PHONY : src/Astar.o
+
+# target to build an object file
+src/Astar.cpp.o:
+	$(MAKE) -f CMakeFiles/panda_control_real.dir/build.make CMakeFiles/panda_control_real.dir/src/Astar.cpp.o
+.PHONY : src/Astar.cpp.o
+
+src/Astar.i: src/Astar.cpp.i
+
+.PHONY : src/Astar.i
+
+# target to preprocess a source file
+src/Astar.cpp.i:
+	$(MAKE) -f CMakeFiles/panda_control_real.dir/build.make CMakeFiles/panda_control_real.dir/src/Astar.cpp.i
+.PHONY : src/Astar.cpp.i
+
+src/Astar.s: src/Astar.cpp.s
+
+.PHONY : src/Astar.s
+
+# target to generate assembly for a file
+src/Astar.cpp.s:
+	$(MAKE) -f CMakeFiles/panda_control_real.dir/build.make CMakeFiles/panda_control_real.dir/src/Astar.cpp.s
+.PHONY : src/Astar.cpp.s
 
 src/controller.o: src/controller.cpp.o
 
@@ -213,6 +240,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... panda_control_real"
 	@echo "... edit_cache"
+	@echo "... src/Astar.o"
+	@echo "... src/Astar.i"
+	@echo "... src/Astar.s"
 	@echo "... src/controller.o"
 	@echo "... src/controller.i"
 	@echo "... src/controller.s"
