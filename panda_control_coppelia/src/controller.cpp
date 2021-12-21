@@ -5,6 +5,7 @@
 
 FILE* fp1 = fopen("../max_vel1.txt", "r");
 FILE* fp2 = fopen("../max_vel2.txt", "r");
+FILE* fp3 = fopen("../obstacle.txt", "r");
 
 void ArmController::compute()
 {
@@ -1052,6 +1053,11 @@ void ArmController::findpath(vector<Vector3d>& robot_path1, vector<Vector3d>& ro
 	int grid_multiplier = 2;    //make grid size up
 	int height = 20;
 	int width = 40;
+
+	double obstacle_X[3], obstacle_Y[3], obstacle_D[3];
+	for(int i = 0; i < 3; i++){
+		fscanf(fp3, "%lf %lf %lf\n", &obstacle_X[i], &obstacle_Y[i], &obstacle_D[i]);
+	}
 
 	//distance from centor of map using panda coordinate & diameter
 	// AStar::Obs2i real_obs1{ 0.02,0.0,0.08 };
